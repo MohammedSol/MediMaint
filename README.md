@@ -776,49 +776,11 @@ MediMaint_AI/
 
 ---
 
-## ⚡ 14. Guide de Démarrage Rapide & Commandes Git
 
-### 1. Consulter le Visualiseur Interactif des Diagrammes
-Le visualiseur HTML autonome permet d'explorer et d'inspecter l'ensemble des diagrammes d'architecture et de processus BPMN sans aucune dépendance :
-```powershell
-# Sur Windows (PowerShell)
-Start-Process docs/diagrammes/visualiseur_diagrammes.html
-
-# Sur macOS / Linux
-open docs/diagrammes/visualiseur_diagrammes.html  # macOS
-xdg-open docs/diagrammes/visualiseur_diagrammes.html  # Linux
-```
-
-### 2. Procédure pour Pousser vers GitHub
-
-```powershell
-# 1. Initialiser le dépôt local
-git init
-
-# 2. Configurer la branche principale
-git branch -M main
-
-# 3. Indexer l'ensemble des fichiers suivis
-git add .
-
-# 4. Effectuer le premier commit certifié
-git commit -m "feat(livrable1): cadrage, corpus 63 docs, architecture cible 7 couches, sequence et bpmn"
-
-# 5. Lier votre dépôt distant GitHub (remplacer par votre URL)
-git remote add origin https://github.com/MohammedSol/MediMaint_AI.git
-
-# 6. Pousser vers la branche main
-git push -u origin main
-```
-
----
-
-## 👥 15. Équipe, Encadrement & Mentions Légales
+## 👥 14. Équipe, Encadrement & Mentions Légales
 
 ### Équipe de Conception
 * **Conception & Développement :** **Mohammed Solimani**  
-  *École Marocaine des Sciences de l'Ingénieur (EMSI) — Promotion 2026*  
-  Contact : [Mohammed.Solimani@emsi-edu.ma](mailto:Mohammed.Solimani@emsi-edu.ma) | GitHub : [@MohammedSol](https://github.com/MohammedSol)
 
 ### Encadrement Universitaire
 * **Professeur Responsable :** **Pr. Mariam CHERRABI**  
