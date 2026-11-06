@@ -1,0 +1,24 @@
+flowchart LR
+    subgraph BPMN_MCP["SOUS-PROCESSUS BPMN : CRÉATION DE TICKET INTERVENTION (ACTION SENSIBLE MCP)"]
+        E_START((Début))
+        P_ANALYSE[Analyser la sévérité du défaut matériel]
+        GW_CRIT{Défaut critique\nou pièce requise ?}
+        P_DRAFT[Rédiger le brouillon du ticket :\nÉquipement, Organe, Priorité]
+        GW_HUMAN{Approbation\nHumaine [PC2]}
+        P_CANCEL[Abandonner l'action et notifier]
+        P_IDEM[Générer la clé d'idempotence UUID]
+        P_CALL_MCP[Exécuter l'appel JSON-RPC MCP GMAO]
+        GW_MCP_STAT{Statut réponse\nServeur MCP}
+        P_RETRY[Nouvel essai avec backoff exponentiel]
+        P_CONFIRM[Enregistrer le N° de ticket dans l'audit]
+        E_END((Fin))
+    end
+
+    E_START --> P_ANALYSE --> GW_CRIT
+    GW_CRIT -->|Non| E_END
+    GW_CRIT -->|Oui| P_DRAFT --> GW_HUMAN
+    GW_HUMAN -->|Refus technicien| P_CANCEL --> E_END
+    GW_HUMAN -->|Validation technicien| P_IDEM --> P_CALL_MCP --> GW_MCP_STAT
+    GW_MCP_STAT -->|Erreur réseau temporaire| P_RETRY --> P_CALL_MCP
+    GW_MCP_STAT -->|Succès : Ticket créé| P_CONFIRM --> E_END
+

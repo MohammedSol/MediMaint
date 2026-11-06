@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MaintiDoc — Visualiseur des Diagrammes d'Architecture & BPMN (Livrable 1)</title>
+    <!-- Chargement de Mermaid.js pour un rendu graphique immédiat -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --secondary: #0284c7;
+            --accent: #d97706;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 24px;
+            line-height: 1.5;
+        }
+        .header {
+            max-width: 1300px;
+            margin: 0 auto 24px auto;
+            background: var(--card-bg);
+            padding: 24px 32px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -2px rgba(0,0,0,0.05);
+            border-left: 6px solid var(--primary);
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            color: var(--primary);
+            font-size: 26px;
+        }
+        .header p {
+            margin: 0;
+            color: #64748b;
+            font-size: 15px;
+        }
+        .badges {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+        .badge.pc {
+            background: #fef3c7;
+            color: #b45309;
+        }
+        .tabs {
+            max-width: 1300px;
+            margin: 0 auto 20px auto;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            background: #e2e8f0;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover {
+            background: #cbd5e1;
+            color: #1e293b;
+        }
+        .tab-btn.active {
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(30, 58, 138, 0.3);
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        .diag-card {
+            display: none;
+            background: var(--card-bg);
+            padding: 28px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px -1px rgba(0,0,0,0.06);
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+        .diag-card.active {
+            display: block;
+        }
+        .diag-title {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            color: var(--primary);
+        }
+        .diag-desc {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 20px;
+            background: #f1f5f9;
+            padding: 12px 16px;
+            border-radius: 6px;
+            border-left: 4px solid var(--secondary);
+        }
+        .mermaid-wrapper {
+            background: #ffffff;
+            border: 1px solid #f1f5f9;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>🏥 MaintiDoc — Visualiseur des Diagrammes et Processus BPMN (Livrable 1)</h1>
+        <p>Assistant Documentaire Multimodal et Agentique pour Techniciens de Maintenance Biomédicale (AGFA DR 100e & Mindray BeneVision N-Series)</p>
+        <div class="badges">
+            <span class="badge">Architecture 7 Couches</span>
+            <span class="badge pc">[PC1] Contrôle d'accès RBAC</span>
+            <span class="badge pc">[PC2] Approbation Humaine MCP</span>
+            <span class="badge pc">[PC3] Vérification Citations</span>
+            <span class="badge">Modélisation BPMN 2.0</span>
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab(0)">1. Architecture par Blocs</button>
+        <button class="tab-btn" onclick="showTab(1)">2. Séquence : Requête Multimodale</button>
+        <button class="tab-btn" onclick="showTab(2)">3. Séquence : Action MCP & GMAO</button>
+        <button class="tab-btn" onclick="showTab(3)">4. Séquence : Ingestion Corpus</button>
+        <button class="tab-btn" onclick="showTab(4)">5. BPMN : Dépannage Terrain</button>
+        <button class="tab-btn" onclick="showTab(5)">6. BPMN : Gouvernance MCP</button>
+        <button class="tab-btn" onclick="showTab(6)">7. Modèle de Données & RBAC</button>
+    </div>
+
+    <div class="container">
+
+        <!-- 1. Architecture par Blocs -->
+        <div class="diag-card active" id="tab-0">
+            <h2 class="diag-title">1. Architecture Cible Globale par Blocs Fonctionnels</h2>
+            <div class="diag-desc">
+                Ce schéma présente les 7 couches modulaires du système, incluant les composants d'entrée, d'API sécurisée, d'orchestration agentique, de Vision-Langage, de RAG hybride, de stockage ChromaDB et du serveur d'outils MCP pour la GMAO. Les 3 points de contrôle obligatoires <b>[PC1]</b>, <b>[PC2]</b> et <b>[PC3]</b> y sont explicitement positionnés.
+            </div>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+flowchart TD
+    subgraph S_USER["👤 Utilisateur & Terrain"]
+        TECH["👷 Technicien Biomédical de garde"]
+    end
+
+    subgraph S_FRONT["🖥️ 1. Interface Utilisateur & Entrées"]
+        UI["Interface Chat Web & Responsive Mobile\n(Upload Photo / Saisie Symptômes)"]
+    end
+
+    subgraph S_API["🌐 2. API Gateway & Sécurité Amont"]
+        API["API REST / WebSocket Gateway (FastAPI)"]
+        AUTH["Module Authentification (JWT & Rôles)"]
+        PC1{"[PC1] CONTRÔLE D'ACCÈS\nLe technicien a-t-il le droit\nde consulter cet équipement ?"}
+        SEC_FILTER["Filtre Anti-Injection & Périmètre Scope\n(DR 100e & BeneVision N-Series)"]
+    end
+
+    subgraph S_ORCH["🤖 3. Orchestration Agentique & Décision"]
+        ROUTER["Routeur Multimodal d'Intentions"]
+        PLANNER["Planificateur d'Actions (LangGraph)\nGestion d'état & Re-planning"]
+        SYNTH["Synthétiseur de Diagnostic Sourcé"]
+        PC3{"[PC3] VÉRIFICATION DES CITATIONS\nChaque affirmation technique est-elle\nstrictement sourcée par le document ?"}
+    end
+
+    subgraph S_VLM["📸 4. Modèle Vision-Langage (VLM) & OCR"]
+        VLM["Module VLM / OCR Local\n(Analyse afficheurs, voyants, panneaux)"]
+    end
+
+    subgraph S_RAG["📚 5. Recherche Documentaire Hybride"]
+        RAG_ENGINE["Moteur RAG Hybride\n(BGE-M3 Dense + BM25 Sparse)"]
+        RERANK["Re-ranker Cross-Encoder"]
+    end
+
+    subgraph S_STORE["💾 6. Stockage & Index Documentaire"]
+        CHROMA[("Base Vectorielle ChromaDB\n(Index 1024d + Filtres Métadonnées)")]
+        CORPUS_RAW[("Dossier Corpus Sécurisé\n(PDFs, Markdown, Fiches Techniques)")]
+        AUDIT_DB[("Journal d'Audit Immuable\n(Logs requêtes, citations, hash)")]
+    end
+
+    subgraph S_MCP["🔌 7. Outils & Serveur MCP (Model Context Protocol)"]
+        MCP_SERVER["Serveur MCP GMAO\n(Protocole standardisé stdio/SSE)"]
+        PC2{"[PC2] APPROBATION HUMAINE\nLe technicien valide-t-il\nla création du ticket GMAO ?"}
+        GMAO[("Système GMAO Hospitalier\n(Gestion de Maintenance)")]
+    end
+
+    %% Flux Requête
+    TECH -->|"Question texte + Photo voyant"| UI
+    UI -->|"Requête multipart/form-data"| API
+    API --> AUTH --> PC1
+    PC1 -->|"✅ Accès autorisé (Groupe valide)"| SEC_FILTER
+    PC1 -->|"⛔ Accès refusé (403 Forbidden)"| UI
+    SEC_FILTER -->|"Requête conforme"| ROUTER
+    SEC_FILTER -->|"⛔ Hors périmètre / Injection bloquée"| UI
+
+    ROUTER -->|"Si image jointe"| VLM
+    VLM -->|"Description voyants & afficheurs"| ROUTER
+    ROUTER -->|"Requête enrichie + Filtre groupe"| PLANNER
+
+    PLANNER -->|"Recherche sémantique avec filtre RBAC"| RAG_ENGINE
+    RAG_ENGINE -->|"Recherche vectorielle"| CHROMA
+    CHROMA -.->|"Chunks autorisés"| RAG_ENGINE
+    RAG_ENGINE -->|"Top-10 chunks bruts"| RERANK
+    RERANK -->|"Top-4 chunks re-classés"| SYNTH
+
+    SYNTH -->|"Brouillon de réponse avec citations"| PC3
+    PC3 -->|"✅ Citations exactes et validées"| UI
+    PC3 -->|"❌ Citation hallucinée -> Régénération"| SYNTH
+    SYNTH -.->|"Archivage log immuable"| AUDIT_DB
+
+    %% Flux Action Sensible MCP
+    PLANNER -->|"Action sensible requise (pièce / arrêt)"| PC2
+    PC2 -->|"Demande d'approbation explicite"| UI
+    UI -->|"✅ Accord explicite du technicien"| PC2
+    PC2 -->|"Exécution outil : creer_ticket()"| MCP_SERVER
+    MCP_SERVER -->|"Écriture avec clé d'idempotence UUID"| GMAO
+    GMAO -->|"N° Ticket confirmé"| MCP_SERVER
+    MCP_SERVER -->|"Confirmation ticket"| UI
+                </pre>
+            </div>
+        </div>
+
+        <!-- 2. Séquence Multimodale -->
+        <div class="diag-card" id="tab-1">
+            <h2 class="diag-title">2. Diagramme de Séquence : Requête Multimodale Terrain</h2>
+            <div class="diag-desc">
+                Parcours complet d'une requête combinant une photo de voyant et une question textuelle, depuis le contrôle d'accès amont <b>[PC1]</b> jusqu'à la vérification stricte des citations de pages <b>[PC3]</b>.
+            </div>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Tech as 👷 Technicien
+    participant UI as 🖥️ Interface UI
+    participant API as 🌐 API Gateway
+    participant Auth as 🛡️ Auth & Access [PC1]
+    participant Agent as 🤖 Orchestrateur Agent
+    participant VLM as 📸 Vision-Langage (VLM)
+    participant RAG as 📚 Moteur RAG Hybride
+    participant LLM as 🧠 LLM Synthèse
+    participant Verif as ⚖️ Vérif Citations [PC3]
+    participant Audit as 💾 Base Audit
+
+    Tech->>UI: Dépose photo voyant + question : "Que signifie ce voyant orange ?"
+    UI->>API: POST /api/v1/query (Image + Texte + JWT Token)
+    
+    API->>Auth: Contrôle identité & groupe de l'utilisateur
+    Note over Auth: [PC1] Le technicien appartient au groupe<br/>'techniciens_radio' -> Accès autorisé AGFA DR 100e
+    Auth-->>API: Profil validé + Filtre: groupe='techniciens_radio'
+
+    API->>Agent: Transmission payload sécurisé
+    Agent->>VLM: Analyse image : identifier équipement, voyants et afficheurs
+    VLM-->>Agent: Résultat : "Panneau AGFA DR 100e, Voyant ERREUR orange allumé, Afficheur=E-003"
+
+    Agent->>RAG: Recherche hybride : "AGFA DR 100e code erreur E-003 voyant orange"
+    Note over RAG: Application stricte du filtre métadonnées :<br/>uniquement documents accessibles par 'techniciens_radio'
+    RAG->>RAG: Dense (BGE-M3) + Sparse (BM25) sur 63 documents
+    RAG->>RAG: Re-ranking des 10 meilleurs passages
+    RAG-->>Agent: Top-3 Chunks (RAD-COD-001 p.1, Manuel 0365D p.50)
+
+    Agent->>LLM: Générer réponse sourcée (Contexte Chunks + Diagnostic VLM)
+    LLM-->>Agent: Brouillon : "Le voyant orange signale une surchauffe monobloc (Code E-003)..."
+
+    Agent->>Verif: [PC3] Contrôle des citations documentaires
+    Note over Verif: Vérifie que l'affirmation 'surchauffe >80kJ'<br/>figure bien dans RAD-COD-001 et Manuel p.50
+    Verif-->>Agent: ✅ Citations 100% vérifiées et conformes
+
+    Agent->>Audit: Enregistrement log (User, Hash requête, Chunks cités, Horodatage)
+    Agent-->>API: Réponse finale + Métadonnées de sources cliquables
+    API-->>UI: Affichage réponse structurée avec badge orange 'Avertissement Thermique'
+    UI-->>Tech: Lecture réponse : cause, délai de refroidissement (15 min) et citation page 50
+                </pre>
+            </div>
+        </div>
+
+        <!-- 3. Séquence MCP GMAO -->
+        <div class="diag-card" id="tab-2">
+            <h2 class="diag-title">3. Diagramme de Séquence : Action Sensible MCP & Ticket GMAO</h2>
+            <div class="diag-desc">
+                Illustration de la gouvernance <b>Human-in-the-Loop [PC2]</b> : l'agent prépare le ticket mais ne l'envoie à la GMAO qu'après validation explicite par le technicien, avec garantie d'idempotence anti-doublon réseau via UUIDv4.
+            </div>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Tech as 👷 Technicien
+    participant UI as 🖥️ Interface UI
+    participant Agent as 🤖 Orchestrateur Agent
+    participant Check as 🛑 Point Contrôle [PC2]
+    participant MCP as 🔌 Serveur MCP GMAO
+    participant GMAO as 🏥 Base GMAO Hôpital
+
+    Note over Agent: L'anomalie détectée nécessite une intervention atelier<br/>(ex: remplacement batterie détecteur DR 14s)
+    Agent->>Agent: Préparation brouillon de ticket (Équipement: AGFA-DR100E-01, Urgence: Haute)
+    Agent->>Check: Déclenchement de l'action sensible 'creation_ticket'
+    
+    Check->>UI: [PC2] Demande d'approbation humaine obligatoire !<br/>"Confirmez-vous la création du ticket d'intervention pour la batterie DR 14s ?"
+    
+    alt Le technicien refuse ou annule
+        Tech->>UI: Clic sur "Annuler / Modifier"
+        UI->>Check: Rejet de l'action par l'utilisateur
+        Check-->>Agent: Action sensible annulée
+        Agent-->>UI: "Opération annulée. Aucun ticket créé dans la GMAO."
+    else Le technicien valide l'action
+        Tech->>UI: Clic sur "Approuver et Créer le Ticket"
+        UI->>Check: Approbation explicite enregistrée
+        Check->>Agent: Feu vert accordé avec signature utilisateur
+        
+        Agent->>Agent: Génération clé d'idempotence unique (UUIDv4 : 'idem-7f8a-49bc-91d2')
+        Agent->>MCP: Appel outil MCP : emettre_ticket(idempotency_key, equipement_id, motif, priorite)
+        
+        MCP->>GMAO: Vérification idempotence : la clé 'idem-7f8a...' existe-t-elle déjà ?
+        alt Clé déjà existante (doublon réseau)
+            GMAO-->>MCP: Renvoi du ticket déjà existant (aucun doublon créé)
+        else Nouvelle clé
+            GMAO->>GMAO: Création de l'enregistrement dans la base GMAO
+            GMAO-->>MCP: Confirmation : Ticket créé avec succès -> N° TICK-2025-0418
+        end
+        
+        MCP-->>Agent: Réponse MCP succès : {status: "created", ticket_id: "TICK-2025-0418"}
+        Agent-->>UI: "✅ Ticket d'intervention TICK-2025-0418 créé avec succès dans la GMAO."
+        UI-->>Tech: Affichage du récapitulatif avec lien GMAO et horodatage certifié
+    end
+                </pre>
+            </div>
+        </div>
+
+        <!-- 4. Séquence Ingestion -->
+        <div class="diag-card" id="tab-3">
+            <h2 class="diag-title">4. Diagramme de Séquence : Pipeline d'Ingestion & Indexation Documentaire</h2>
+            <div class="diag-desc">
+                Processus automatisé de traitement des 63 documents : extraction OCR, enrichissement des 20 métadonnées d'inventaire, découpage sémantique (512 tokens), embedding BGE-M3 (1024d) et indexation ChromaDB.
+            </div>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Ingest as ⚙️ Pipeline d'Ingestion
+    participant Loader as 📄 Extracteur / Parser
+    participant OCR as 📸 Moteur OCR Local
+    participant Meta as 🏷️ Extracteur Métadonnées
+    participant Chunker as ✂️ Découpeur Sémantique
+    participant Embed as 🔢 Modèle BGE-M3
+    participant VectorDB as 💾 Base ChromaDB
+    participant Inv as 📑 inventaire.csv
+
+    Ingest->>Loader: Lecture fichier depuis corpus/documents/
+    
+    alt Fichier PDF Scanné ou Image
+        Loader->>OCR: Transmission des pages scannées
+        OCR-->>Loader: Texte brut extrait + coordonnées spatiales
+    else Fichier PDF Texte natif ou Markdown
+        Loader->>Loader: Extraction directe texte numérique + tableaux
+    end
+
+    Loader->>Meta: Rapprochement avec inventaire.csv
+    Meta-->>Loader: Métadonnées consolidées {document_id, famille, version, groupe_acces}
+
+    Loader->>Chunker: Texte complet + métadonnées
+    Note over Chunker: Découpage en blocs de 512 tokens<br/>avec recouvrement de 128 tokens<br/>Conservation stricte des tableaux
+    Chunker-->>Loader: Liste des chunks atomiques annotés
+
+    Loader->>Embed: Envoi des chunks par batch (taille 16)
+    Embed-->>Loader: Vecteurs d'embeddings denses (dimension 1024)
+
+    Loader->>VectorDB: Écriture {id, vecteur, texte, metadonnees}
+    VectorDB-->>Loader: Indexation vectorielle confirmée (HNSW)
+
+    Loader->>Inv: Contrôle bidirectionnel : chaque fichier du dossier figure dans inventaire.csv
+    Inv-->>Ingest: ✅ Corpus synchronisé et prêt pour la recherche
+                </pre>
+            </div>
+        </div>
+
+        <!-- 5. BPMN Processus Global -->
+        <div class="diag-card" id="tab-4">
+            <h2 class="diag-title">5. Modélisation BPMN 2.0 : Processus Global de Dépannage Biomédical</h2>
+            <div class="diag-desc">
+                Diagramme BPMN complet structuré en 3 couloirs de responsabilités (Swimlanes) : Technicien Biomédical Terrain, Assistant IA Agentique MaintiDoc, et Responsable Biomédical / GMAO.
+            </div>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+flowchart TD
+    %% Couloir Technicien
+    subgraph LANE_TECH["👷 COULOIR TECHNICIEN BIOMÉDICAL (TERRAIN)"]
+        T_START((Début : Incident sur équipement))
+        T_PHOTO["Photographier le pupitre / voyant défaillant"]
+        T_FORM["Saisir la description des symptômes"]
+        T_READ["Consulter le diagnostic et la procédure proposée"]
+        T_EXEC["Exécuter l'intervention sur la machine"]
+        T_VAL_TICK{"Valider la création\ndu ticket GMAO ?"}
+        T_CONFIRM["Confirmer et signer la demande de ticket"]
+        T_END((Fin : Équipement dépanné & tracé))
+    end
+
+    %% Couloir Agent IA
+    subgraph LANE_AGENT["🤖 COULOIR ASSISTANT IA AGENTIQUE (MAINTIDOC)"]
+        A_CHECK_AUTH{"Droits d'accès\nvalides ? [PC1]"}
+        A_REFUSE["Refuser l'accès et notifier l'utilisateur"]
+        A_OCR["Extraire le texte et voyants via Vision/OCR"]
+        A_SEARCH["Rechercher les chunks dans le corpus autorisé"]
+        A_SYNTH["Générer la recommandation avec citations [PC3]"]
+        A_DECIDE_TICK{"Nécessite une\npièce ou arrêt ?"}
+        A_PREP_TICK["Préparer le ticket GMAO avec idempotence"]
+        A_SEND_MCP["Appeler l'outil MCP GMAO"]
+    end
+
+    %% Couloir Responsable GMAO
+    subgraph LANE_GMAO["🏥 COULOIR RESPONSABLE MAINTENANCE & GMAO"]
+        G_REC["Réceptionner le ticket dans la GMAO"]
+        G_PLAN["Commander la pièce détachée / Planifier suivi"]
+    end
+
+    %% Enchaînements BPMN
+    T_START --> T_PHOTO
+    T_PHOTO --> T_FORM
+    T_FORM --> A_CHECK_AUTH
+
+    A_CHECK_AUTH -->|Non| A_REFUSE
+    A_REFUSE --> T_END
+    A_CHECK_AUTH -->|Oui| A_OCR
+
+    A_OCR --> A_SEARCH
+    A_SEARCH --> A_SYNTH
+    A_SYNTH --> T_READ
+
+    T_READ --> T_EXEC
+    T_EXEC --> A_DECIDE_TICK
+
+    A_DECIDE_TICK -->|Non : Dépannage simple achevé| T_END
+    A_DECIDE_TICK -->|Oui : Pièce / intervention lourde| A_PREP_TICK
+
+    A_PREP_TICK --> T_VAL_TICK
+    T_VAL_TICK -->|Rejeté| T_END
+    T_VAL_TICK -->|Approuvé [PC2]| T_CONFIRM
+
+    T_CONFIRM --> A_SEND_MCP
+    A_SEND_MCP --> G_REC
+    G_REC --> G_PLAN
+    G_PLAN --> T_END
+                </pre>
+            </div>
+        </div>
+
+        <!-- 6. BPMN Gouvernance MCP -->
+        <div class="diag-card" id="tab-5">
+            <h2 class="diag-title">6. Sous-Processus BPMN : Gouvernance de l'Action Sensible MCP</h2>
+            <div class="diag-desc">
+                Logique de décision fine pour les actions à impact matériel (arrêt d'équipement, création de ticket d'intervention, commande de sous-ensemble critique).
+            </div>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+flowchart LR
+    subgraph BPMN_MCP["SOUS-PROCESSUS BPMN : CRÉATION DE TICKET INTERVENTION (ACTION SENSIBLE MCP)"]
+        E_START((Début))
+        P_ANALYSE["Analyser la sévérité du défaut matériel"]
+        GW_CRIT{"Défaut critique\nou pièce requise ?"}
+        P_DRAFT["Rédiger le brouillon du ticket :\nÉquipement, Organe, Priorité"]
+        GW_HUMAN{"Approbation\nHumaine [PC2]"}
+        P_CANCEL["Abandonner l'action et notifier"]
+        P_IDEM["Générer la clé d'idempotence UUID"]
+        P_CALL_MCP["Exécuter l'appel JSON-RPC MCP GMAO"]
+        GW_MCP_STAT{"Statut réponse\nServeur MCP"}
+        P_RETRY["Nouvel essai avec backoff exponentiel"]
+        P_CONFIRM["Enregistrer le N° de ticket dans l'audit"]
+        E_END((Fin))
+    end
+
+    E_START --> P_ANALYSE --> GW_CRIT
+    GW_CRIT -->|Non| E_END
+    GW_CRIT -->|Oui| P_DRAFT --> GW_HUMAN
+    GW_HUMAN -->|Refus technicien| P_CANCEL --> E_END
+    GW_HUMAN -->|Validation technicien| P_IDEM --> P_CALL_MCP --> GW_MCP_STAT
+    GW_MCP_STAT -->|Erreur réseau temporaire| P_RETRY --> P_CALL_MCP
+    GW_MCP_STAT -->|Succès : Ticket créé| P_CONFIRM --> E_END
+                </pre>
+            </div>
+        </div>
+
+        <!-- 7. Modèle de Données ERD -->
+        <div class="diag-card" id="tab-6">
+            <h2 class="diag-title">7. Modèle Entité-Association (ERD) des Métadonnées & RBAC</h2>
+            <div class="diag-desc">
+                Schéma relationnel démontrant comment chaque document de l'inventaire est relié à ses fragments vectoriels (chunks 1024d), aux règles d'accès RBAC et aux traces d'audit.
+            </div>
+            <div class="mermaid-wrapper">
+                <pre class="mermaid">
+erDiagram
+    DOCUMENT ||--o{ CHUNK : "est découpe en (1..N)"
+    DOCUMENT }|--|| GROUPE_ACCES : "restreint par"
+    UTILISATEUR }|--|{ GROUPE_ACCES : "appartient a"
+    UTILISATEUR ||--o{ REQUETE_AUDIT : "emet"
+    REQUETE_AUDIT ||--o{ CHUNK : "cite"
+    REQUETE_AUDIT ||--o| TICKET_GMAO : "declenche"
+
+    DOCUMENT {
+        string document_id PK "RAD-MAN-001, MON-COD-001..."
+        string fichier "chemin relatif fichier"
+        string titre "Titre officiel du document"
+        string famille_equipement "radiographie_numerique | moniteur..."
+        string equipement_id "AGFA-DR100E | MINDRAY-BV-NSERIES"
+        string type_document "manuel | procedure | code_erreur..."
+        string version "B, C, D, 3.0..."
+        int nb_pages "Nombre de pages"
+        string langue "fr | en"
+        string format "pdf | md | png"
+        string elements_visuels "oui | non"
+        string provenance "constructeur | synthetique_ia"
+        string licence "Proprietaire | CC-BY-NC-SA"
+        string genere_par_ia "non | oui"
+        string outil_ia "None | GPT-4o / Claude"
+        string verifie_par "Ingenieur Biomed"
+        string groupe_acces FK "techniciens_radio | tous..."
+    }
+
+    CHUNK {
+        string chunk_id PK "UUID v4"
+        string document_id FK "Reference vers DOCUMENT"
+        int page_source "Numero de page exacte"
+        int position_index "Index ordinal du fragment"
+        string texte_brut "Contenu textuel (512 tokens)"
+        float vector_1024 "Vecteur dense BGE-M3 (ChromaDB)"
+        boolean contient_tableau "Indicateur presence de tableau"
+    }
+
+    GROUPE_ACCES {
+        string code_groupe PK "techniciens_radio, techniciens_monitorage..."
+        string description "Perimetre d'habilitation clinique"
+    }
+
+    UTILISATEUR {
+        string matricule PK "BIO-7412"
+        string nom_complet "Technicien de maintenance"
+        string role "Technicien | Responsable"
+        string hash_password "BCrypt"
+    }
+
+    TICKET_GMAO {
+        string ticket_id PK "TICK-2025-0418"
+        string idempotency_key "UUID unique anti-doublon"
+        string equipement_id "Reference materiel"
+        string gravite "Basse | Moyenne | Haute | Critique"
+        string description_panne "Description validee [PC2]"
+        string date_creation "Timestamp certifie"
+        string statut "OUVERT | EN_COURS | CLOTURE"
+    }
+
+    REQUETE_AUDIT {
+        string audit_id PK "LOG-UUID"
+        string matricule FK "Utilisateur demandeur"
+        string question_hash "SHA-256 de la requete"
+        string reponse_generee "Texte de la reponse"
+        string citations_validees "Liste des chunks certifies [PC3]"
+        timestamp date_heure "Horodatage UTC"
+    }
+                </pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialisation de Mermaid avec thème professionnel et fluide
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true, curve: 'basis' }
+        });
+
+        function showTab(index) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const cards = document.querySelectorAll('.diag-card');
+            
+            tabs.forEach((tab, i) => {
+                if (i === index) {
+                    tab.classList.add('active');
+                    cards[i].classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                    cards[i].classList.remove('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
+

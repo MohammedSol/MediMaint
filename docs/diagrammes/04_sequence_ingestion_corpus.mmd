@@ -1,0 +1,36 @@
+sequenceDiagram
+    autonumber
+    actor Ingest as ⚙️ Pipeline d'Ingestion
+    participant Loader as 📄 Extracteur / Parser
+    participant OCR as 📸 Moteur OCR Local
+    participant Meta as 🏷️ Extracteur Métadonnées
+    participant Chunker as ✂️ Découpeur Sémantique
+    participant Embed as 🔢 Modèle BGE-M3
+    participant VectorDB as 💾 Base ChromaDB
+    participant Inv as 📑 inventaire.csv
+
+    Ingest->>Loader: Lecture fichier depuis corpus/documents/
+    
+    alt Fichier PDF Scanné ou Image
+        Loader->>OCR: Transmission des pages scannées
+        OCR-->>Loader: Texte brut extrait + coordonnées spatiales
+    else Fichier PDF Texte natif ou Markdown
+        Loader->>Loader: Extraction directe texte numérique + tableaux
+    end
+
+    Loader->>Meta: Rapprochement avec inventaire.csv
+    Meta-->>Loader: Métadonnées consolidées {document_id, famille, version, groupe_acces}
+
+    Loader->>Chunker: Texte complet + métadonnées
+    Note over Chunker: Découpage en blocs de 512 tokens<br/>avec recouvrement de 128 tokens<br/>Conservation stricte des tableaux
+    Chunker-->>Loader: Liste des chunks atomiques annotés
+
+    Loader->>Embed: Envoi des chunks par batch (taille 16)
+    Embed-->>Loader: Vecteurs d'embeddings denses (dimension 1024)
+
+    Loader->>VectorDB: Écriture {id, vecteur, texte, metadonnees}
+    VectorDB-->>Loader: Indexation vectorielle confirmée (HNSW)
+
+    Loader->>Inv: Contrôle bidirectionnel : chaque fichier du dossier figure dans inventaire.csv
+    Inv-->>Ingest: ✅ Corpus synchronisé et prêt pour la recherche
+

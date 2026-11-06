@@ -1,0 +1,41 @@
+sequenceDiagram
+    autonumber
+    actor Tech as 👷 Technicien
+    participant UI as 🖥️ Interface UI
+    participant Agent as 🤖 Orchestrateur Agent
+    participant Check as 🛑 Point Contrôle [PC2]
+    participant MCP as 🔌 Serveur MCP GMAO
+    participant GMAO as 🏥 Base GMAO Hôpital
+
+    Note over Agent: L'anomalie détectée nécessite une intervention atelier<br/>(ex: remplacement batterie détecteur DR 14s)
+    Agent->>Agent: Préparation brouillon de ticket (Équipement: AGFA-DR100E-01, Urgence: Haute)
+    Agent->>Check: Déclenchement de l'action sensible 'creation_ticket'
+    
+    Check->>UI: [PC2] Demande d'approbation humaine obligatoire !<br/>"Confirmez-vous la création du ticket d'intervention pour la batterie DR 14s ?"
+    
+    alt Le technicien refuse ou annule
+        Tech->>UI: Clic sur "Annuler / Modifier"
+        UI->>Check: Rejet de l'action par l'utilisateur
+        Check-->>Agent: Action sensible annulée
+        Agent-->>UI: "Opération annulée. Aucun ticket créé dans la GMAO."
+    else Le technicien valide l'action
+        Tech->>UI: Clic sur "Approuver et Créer le Ticket"
+        UI->>Check: Approbation explicite enregistrée
+        Check->>Agent: Feu vert accordé avec signature utilisateur
+        
+        Agent->>Agent: Génération clé d'idempotence unique (UUIDv4 : 'idem-7f8a-49bc-91d2')
+        Agent->>MCP: Appel outil MCP : emettre_ticket(idempotency_key, equipement_id, motif, priorite)
+        
+        MCP->>GMAO: Vérification idempotence : la clé 'idem-7f8a...' existe-t-elle déjà ?
+        alt Clé déjà existante (doublon réseau)
+            GMAO-->>MCP: Renvoi du ticket déjà existant (aucun doublon créé)
+        else Nouvelle clé
+            GMAO->>GMAO: Création de l'enregistrement dans la base GMAO
+            GMAO-->>MCP: Confirmation : Ticket créé avec succès -> N° TICK-2025-0418
+        end
+        
+        MCP-->>Agent: Réponse MCP succès : {status: "created", ticket_id: "TICK-2025-0418"}
+        Agent-->>UI: "✅ Ticket d'intervention TICK-2025-0418 créé avec succès dans la GMAO."
+        UI-->>Tech: Affichage du récapitulatif avec lien GMAO et horodatage certifié
+    end
+

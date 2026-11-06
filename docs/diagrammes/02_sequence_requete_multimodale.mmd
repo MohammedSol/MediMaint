@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    actor Tech as 👷 Technicien
+    participant UI as 🖥️ Interface UI
+    participant API as 🌐 API Gateway
+    participant Auth as 🛡️ Auth & Access [PC1]
+    participant Agent as 🤖 Orchestrateur Agent
+    participant VLM as 📸 Vision-Langage (VLM)
+    participant RAG as 📚 Moteur RAG Hybride
+    participant LLM as 🧠 LLM Synthèse
+    participant Verif as ⚖️ Vérif Citations [PC3]
+    participant Audit as 💾 Base Audit
+
+    Tech->>UI: Dépose photo voyant + question : "Que signifie ce voyant orange ?"
+    UI->>API: POST /api/v1/query (Image + Texte + JWT Token)
+    
+    API->>Auth: Vérification identité & groupe de l'utilisateur
+    Note over Auth: [PC1] Le technicien appartient au groupe<br/>'techniciens_radio' -> Accès autorisé DR 100e
+    Auth-->>API: Profil validé + Filtre: groupe='techniciens_radio'
+
+    API->>Agent: Transmission payload sécurisé
+    Agent->>VLM: Analyse image : identifier équipement, voyants et afficheurs
+    VLM-->>Agent: Résultat : "Panneau AGFA DR 100e, Voyant ERREUR orange allumé, Afficheur=E-003"
+
+    Agent->>RAG: Recherche hybride : "AGFA DR 100e code erreur E-003 voyant orange"
+    Note over RAG: Application stricte du filtre métadonnées :<br/>uniquement documents accessibles par 'techniciens_radio'
+    RAG->>RAG: Dense (BGE-M3) + Sparse (BM25) sur 63 documents
+    RAG->>RAG: Re-ranking des 10 meilleurs passages
+    RAG-->>Agent: Top-3 Chunks (RAD-COD-001 p.1, Manuel 0365D p.50)
+
+    Agent->>LLM: Générer réponse sourcée (Contexte Chunks + Diagnostic VLM)
+    LLM-->>Agent: Brouillon : "Le voyant orange signale une surchauffe monobloc (Code E-003)..."
+
+    Agent->>Verif: [PC3] Contrôle des citations documentaires
+    Note over Verif: Vérifie que l'affirmation 'surchauffe >80kJ'<br/>figure bien dans RAD-COD-001 et Manuel p.50
+    Verif-->>Agent: ✅ Citations 100% vérifiées et conformes
+
+    Agent->>Audit: Enregistrement log (User, Hash requête, Chunks cités, Horodatage)
+    Agent-->>API: Réponse finale + Métadonnées de sources cliquables
+    API-->>UI: Affichage réponse structurée avec badge orange 'Avertissement Thermique'
+    UI-->>Tech: Lecture réponse : cause, délai de refroidissement (15 min) et citation page 50
+

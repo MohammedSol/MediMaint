@@ -1,0 +1,57 @@
+flowchart TD
+    %% Couloirs Swimlanes
+    subgraph LANE_TECH["👷 COULOIR TECHNICIEN BIOMÉDICAL (TERRAIN)"]
+        T_START((Début : Incident sur équipement))
+        T_PHOTO[Photographier le pupitre / voyant défaillant]
+        T_FORM[Saisir la description des symptômes]
+        T_READ[Consulter le diagnostic et la procédure proposée]
+        T_EXEC[Exécuter l'intervention sur la machine]
+        T_VAL_TICK{Valider la création\ndu ticket GMAO ?}
+        T_CONFIRM[Confirmer et signer la demande de ticket]
+        T_END((Fin : Équipement dépanné & tracé))
+    end
+
+    subgraph LANE_AGENT["🤖 COULOIR ASSISTANT IA AGENTIQUE (MAINTIDOC)"]
+        A_CHECK_AUTH{Droits d'accès\nvalides ? [PC1]}
+        A_REFUSE[Refuser l'accès et notifier l'utilisateur]
+        A_OCR[Extraire le texte et voyants via Vision/OCR]
+        A_SEARCH[Rechercher les chunks dans le corpus autorisé]
+        A_SYNTH[Générer la recommandation avec citations [PC3]]
+        A_DECIDE_TICK{Nécessite une\npièce ou arrêt ?}
+        A_PREP_TICK[Préparer le ticket GMAO avec idempotence]
+        A_SEND_MCP[Appeler l'outil MCP GMAO]
+    end
+
+    subgraph LANE_GMAO["🏥 COULOIR RESPONSABLE MAINTENANCE & GMAO"]
+        G_REC[Réceptionner le ticket dans la GMAO]
+        G_PLAN[Commander la pièce détachée / Planifier suivi]
+    end
+
+    %% Enchaînements BPMN
+    T_START --> T_PHOTO
+    T_PHOTO --> T_FORM
+    T_FORM --> A_CHECK_AUTH
+
+    A_CHECK_AUTH -->|Non| A_REFUSE
+    A_REFUSE --> T_END
+    A_CHECK_AUTH -->|Oui| A_OCR
+
+    A_OCR --> A_SEARCH
+    A_SEARCH --> A_SYNTH
+    A_SYNTH --> T_READ
+
+    T_READ --> T_EXEC
+    T_EXEC --> A_DECIDE_TICK
+
+    A_DECIDE_TICK -->|Non : Dépannage simple achevé| T_END
+    A_DECIDE_TICK -->|Oui : Pièce / intervention lourde| A_PREP_TICK
+
+    A_PREP_TICK --> T_VAL_TICK
+    T_VAL_TICK -->|Rejeté| T_END
+    T_VAL_TICK -->|Approuvé [PC2]| T_CONFIRM
+
+    T_CONFIRM --> A_SEND_MCP
+    A_SEND_MCP --> G_REC
+    G_REC --> G_PLAN
+    G_PLAN --> T_END
+
